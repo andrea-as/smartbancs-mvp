@@ -1,0 +1,6 @@
+ETL quality report
+Dataset: etl/data/raw_transactions.csv
+Rows processed: 5
+Rows valid: 1
+Rows rejected: 4
+Output: etl/data/clean_transactions.csv

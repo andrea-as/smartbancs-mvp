@@ -1,0 +1,27 @@
+---
+- name: Provision and validate SmartBancs local MVP
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    project_dir: "{{ playbook_dir }}/.."
+  tasks:
+    - name: Validate Docker Compose file
+      ansible.builtin.command:
+        cmd: docker compose config
+        chdir: "{{ project_dir }}"
+      changed_when: false
+
+    - name: Start SmartBancs services
+      ansible.builtin.command:
+        cmd: docker compose up -d --build
+        chdir: "{{ project_dir }}"
+      register: compose_start
+      changed_when: true
+
+    - name: Verify API health
+      ansible.builtin.uri:
+        url: http://localhost:8000/health
+        status_code: 200
+        retries: 12
+        delay: 5

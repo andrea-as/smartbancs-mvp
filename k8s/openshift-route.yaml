@@ -1,0 +1,13 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: smartbancs-api
+  namespace: smartbancs
+spec:
+  to:
+    kind: Service
+    name: smartbancs-api
+  port:
+    targetPort: 80
+  tls:
+    termination: edge

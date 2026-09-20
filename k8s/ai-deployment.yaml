@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smartbancs-ai
+  namespace: smartbancs
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: smartbancs-ai}
+  template:
+    metadata:
+      labels: {app: smartbancs-ai}
+    spec:
+      containers:
+        - name: ai
+          image: smartbancs/ai:latest
+          ports: [{containerPort: 8001}]
+          env:
+            - name: DATABASE_URL
+              valueFrom: {secretKeyRef: {name: smartbancs-secrets, key: database-url}}
+            - name: REDIS_URL
+              valueFrom: {secretKeyRef: {name: smartbancs-secrets, key: redis-url}}
+          readinessProbe: {httpGet: {path: /health, port: 8001}}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: 500m, memory: 512Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smartbancs-ai
+  namespace: smartbancs
+spec:
+  selector: {app: smartbancs-ai}
+  ports: [{port: 8001, targetPort: 8001}]

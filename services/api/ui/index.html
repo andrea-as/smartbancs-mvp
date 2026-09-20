@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SmartBancs | Centro de operaciones</title>
+  <style>
+    :root { --navy:#10243e; --blue:#1976d2; --green:#16845b; --bg:#f4f7fb; --ink:#1d2b3c; --muted:#637287; --card:#fff; --line:#dce5ef; }
+    * { box-sizing:border-box; } body { margin:0; background:var(--bg); color:var(--ink); font:15px system-ui,-apple-system,Segoe UI,sans-serif; }
+    header { background:linear-gradient(115deg,var(--navy),#155b91); color:white; padding:28px max(22px,calc((100% - 1180px)/2)); }
+    header h1 { margin:0 0 6px; font-size:28px; } header p { margin:0; opacity:.82; }
+    main { max-width:1180px; margin:26px auto; padding:0 22px; } .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:21px; box-shadow:0 5px 18px #17395b0c; }
+    h2 { margin:0 0 7px; font-size:19px; } .hint { color:var(--muted); margin:0 0 18px; line-height:1.45; }
+    label { display:block; font-weight:650; margin:11px 0 5px; } input, select { width:100%; padding:10px 11px; border:1px solid #c8d5e2; border-radius:8px; font:inherit; background:#fff; }
+    button, a.button { display:inline-block; border:0; border-radius:8px; padding:10px 14px; margin-top:15px; color:white; background:var(--blue); cursor:pointer; font:inherit; text-decoration:none; }
+    button.secondary, a.secondary { background:#e9f1f8; color:#1b4f7b; } button.green { background:var(--green); }
+    pre { white-space:pre-wrap; word-break:break-word; background:#101b2a; color:#d9f0ff; padding:13px; min-height:48px; border-radius:8px; margin:15px 0 0; font-size:13px; }
+    .status { display:flex; align-items:center; gap:9px; margin-top:14px; font-weight:650; } .dot { width:11px; height:11px; border-radius:50%; background:#e0a51d; } .dot.ok { background:#18a66d; }
+    table { width:100%; border-collapse:collapse; margin-top:14px; } th, td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); } th { color:var(--muted); font-size:13px; } td.amount { text-align:right; font-variant-numeric:tabular-nums; } .accounts-table th, .accounts-table td { text-align:center; } .account-id { font-weight:700; color:#155b91; } .small { color:var(--muted); font-size:13px; } .balance-hidden .balance-column { display:none; }
+    .metric-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:14px; }
+    .metric { background:#f5f9fd; border:1px solid var(--line); border-radius:10px; padding:10px; min-width:0; }
+    .metric strong { display:block; font-size:21px; color:var(--navy); margin-top:3px; }
+    @media (max-width:700px) {  main { margin:16px auto; padding:0 12px; }
+  .grid { grid-template-columns:1fr; gap:12px; }  .wide { grid-column:auto; }  .summary-card { grid-column:auto; }  .metric-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }  .metric { font-size:13px; } }
+    .wide { grid-column:1/-1; } .summary-card {grid-column: span 2;} footer { max-width:1180px; margin:0 auto 35px; padding:0 22px; color:var(--muted); }
+  </style>
+</head>
+<body>
+  <header><h1>SmartBancs</h1><p>Centro de operaciones y demostración del MVP bancario</p></header>
+  <main>
+    <div class="grid">
+      <section class="card">
+        <h2>Estado de la plataforma</h2><p class="hint">Comprueba conexión con API y base de datos.</p>
+        <div class="status"><span id="healthDot" class="dot"></span><span id="healthText">Sin comprobar</span></div>
+        <button onclick="health()">Comprobar salud</button>
+        <pre id="healthOut">Aún no se ha realizado la comprobación.</pre>
+      </section>
+      <section class="card summary-card">
+        <h2>Resumen de operación</h2>
+        <p class="hint">Resumen compacto de la actividad de API e IA. Prometheus conserva el detalle técnico.</p>
+        <button class="secondary" onclick="loadMetrics()">Actualizar métricas</button>
+        <span id="metricsStatus" class="small">Aún no se han consultado las métricas.</span>
+        <div id="metricsOut" class="metric-grid">
+          <div class="metric">Solicitudes HTTP<strong>—</strong></div>
+          <div class="metric">Transferencias completadas<strong>—</strong></div>
+          <div class="metric">Eventos Bancs aceptados<strong>—</strong></div>
+          <div class="metric">Trabajos IA completados<strong>—</strong></div>
+          <div class="metric">Errores de base de datos<strong>—</strong></div>
+          <div class="metric">Trabajos pendientes IA<strong>—</strong></div>
+        </div>
+        <p class="small">Formato original: <a href="/metrics" target="_blank">métricas técnicas</a>.</p>
+      </section>
+      <section class="card wide">
+        <h2>Cuentas demo</h2>
+        <p class="hint">Selecciona una cuenta para consultar su información. Son datos locales del MVP; no se muestran contraseñas ni datos reales.</p>
+        <button class="secondary" onclick="loadAccounts()">Actualizar saldos</button>
+        <button class="secondary" id="toggleBalancesButton" onclick="toggleBalances()">Ocultar saldos</button>
+        <span id="accountsStatus" class="small">Aún no se han consultado las cuentas.</span>
+        <label for="accountSelector">Cuenta a consultar</label>
+        <select id="accountSelector" onchange="showSelectedAccount()" disabled>
+          <option>Primero actualiza las cuentas</option>
+        </select>
+        <div id="accountsOut"><p class="small">Presiona “Actualizar saldos” para cargar las cuentas.</p></div>
+        <p class="small">Versión = contador interno de cambios de saldo de la cuenta; ayuda a demostrar concurrencia y control de actualizaciones.</p>
+      </section>
+      <section class="card">
+        <h2>Transferencia</h2><p class="hint">Prueba una operación financiera con bloqueo transaccional.</p>
+        <label>Cuenta origen</label><input id="source" value="ACC-1001">
+        <label>Cuenta destino</label><input id="destination" value="ACC-1002">
+        <label>Monto (USD)</label><input id="amount" type="number" min="0.01" step="0.01" value="1">
+        <button class="green" onclick="transfer()">Ejecutar transferencia</button>
+        <pre id="transferOut">El resultado aparecerá aquí.</pre>
+      </section>
+      <section class="card">
+        <h2>Recomendaciones de IA</h2><p class="hint">La recomendación se procesa en segundo plano y no bloquea la transferencia.</p>
+        <label>Cuenta</label><input id="recommendationAccount" value="ACC-1001">
+        <button onclick="recommendations()">Consultar recomendaciones</button>
+        <pre id="recommendationOut">El resultado aparecerá aquí.</pre>
+      </section>
+      <section class="card">
+        <h2>Integración con Bancs</h2><p class="hint">Simula la recepción y normalización de un evento del Core legado.</p>
+        <label>Cuenta origen del evento</label><input id="bancsSource" value="acc-1001">
+        <label>Cuenta destino del evento</label><input id="bancsDestination" value="acc-1002">
+        <label>Monto informado por Bancs (USD)</label><input id="bancsAmount" type="number" min="0.01" step="0.01" value="25.50">
+        <button onclick="bancs()" class="secondary">Enviar evento Bancs de prueba</button>
+        <pre id="bancsOut">El resultado aparecerá aquí.</pre>
+      </section>
+      <section class="card wide">
+        <h2>Observabilidad</h2><p class="hint">Herramientas del reto técnico para revisar métricas y experiencia digital.</p>
+        <button onclick="synthetic()">Probar experiencia digital</button>
+        <a class="button secondary" href="/metrics" target="_blank">Abrir métricas</a>
+        <a class="button secondary" href="/docs" target="_blank">Abrir documentación técnica</a>
+        <pre id="syntheticOut">El resultado aparecerá aquí.</pre>
+      </section>
+    </div>
+  </main>
+  <footer>SmartBancs MVP · Entorno local sin servicios de pago</footer>
+  <script>
+    const out = (id, value) => document.getElementById(id).textContent = JSON.stringify(value, null, 2);
+    async function call(url, options) { const r = await fetch(url, options); const data = await r.json(); if (!r.ok) throw data; return data; }
+    async function health() { try { const data = await call('/health'); document.getElementById('healthDot').className='dot ok'; document.getElementById('healthText').textContent='Operativa'; out('healthOut',data); } catch(e) { document.getElementById('healthText').textContent='Error'; out('healthOut',e); } }
+    let accountData = [];
+    async function loadAccounts() {
+      try {
+        accountData = await call('/api/v1/accounts');
+        document.getElementById('accountsStatus').textContent = accountData.length + ' cuentas disponibles';
+        const selector = document.getElementById('accountSelector');
+        selector.innerHTML = accountData.map(account => '<option value="' + account.account_id + '">' + account.account_id + '</option>').join('');
+        selector.disabled = false;
+        showSelectedAccount();
+      } catch(e) {
+        document.getElementById('accountsStatus').textContent = 'No se pudieron consultar las cuentas';
+        out('accountsOut', e);
+      }
+    }
+    function showSelectedAccount() {
+      const account = accountData.find(item => item.account_id === document.getElementById('accountSelector').value);
+      if (!account) return;
+      document.getElementById('accountsOut').innerHTML = '<table class="accounts-table"><thead><tr><th>Cuenta</th><th>Cliente demo</th><th>Moneda</th><th class="balance-column">Saldo actual</th><th>Versión</th></tr></thead><tbody><tr><td class="account-id">' + account.account_id + '</td><td>' + account.owner_id + '</td><td>' + account.currency + '</td><td class="amount balance-column">' + Number(account.balance).toFixed(2) + ' ' + account.currency + '</td><td>' + account.version + '</td></tr></tbody></table>';
+      document.getElementById('accountsOut').classList.toggle('balance-hidden', !balancesVisible);
+    }
+    let balancesVisible = true;
+    function toggleBalances() {
+      balancesVisible = !balancesVisible;
+      const accountsOut = document.getElementById('accountsOut');
+      accountsOut.classList.toggle('balance-hidden', !balancesVisible);
+      document.getElementById('toggleBalancesButton').textContent = balancesVisible ? 'Ocultar saldos' : 'Mostrar saldos';
+    }
+    function metricValue(text, name, labels) {
+      const labelText = labels ? '\\{' + labels + '\\}' : '(?:\\{[^}]*\\})?';
+      const match = text.match(new RegExp('^' + name + labelText + '\\s+([0-9.eE+-]+)$', 'm'));
+      return match ? Number(match[1]) : 0;
+    }
+    async function loadMetrics() {
+      try {
+        const response = await fetch('/metrics/');
+        if (!response.ok) throw new Error('No se pudieron consultar las métricas');
+        const text = await response.text();
+        const aiSummary = await fetch('http://localhost:8001/summary').then(result => {
+          if (!result.ok) throw new Error('No se pudieron consultar las métricas de IA');
+          return result.json();
+        });
+        const values = {
+          requests: metricValue(text, 'smartbancs_http_requests_total'),
+          transfers: metricValue(text, 'smartbancs_transfers_total', 'status="completed"'),
+          bancs: metricValue(text, 'smartbancs_bancs_events_total', 'status="accepted"'),
+          ai: aiSummary.jobs_completed,
+          db: metricValue(text, 'smartbancs_db_errors_total'),
+          queue: aiSummary.queue_depth
+        };
+        document.getElementById('metricsStatus').textContent = 'Actualizado: ' + new Date().toLocaleTimeString();
+        document.getElementById('metricsOut').innerHTML =
+          '<div class="metric">Solicitudes HTTP<strong>' + values.requests + '</strong></div>' +
+          '<div class="metric">Transferencias completadas<strong>' + values.transfers + '</strong></div>' +
+          '<div class="metric">Eventos Bancs aceptados<strong>' + values.bancs + '</strong></div>' +
+          '<div class="metric">Trabajos IA completados<strong>' + values.ai + '</strong></div>' +
+          '<div class="metric">Errores de base de datos<strong>' + values.db + '</strong></div>' +
+          '<div class="metric">Trabajos pendientes IA<strong>' + values.queue + '</strong></div>';
+      } catch (error) {
+        document.getElementById('metricsStatus').textContent = error.message;
+      }
+    }
+    async function transfer() { try { out('transferOut', await call('/api/v1/transfers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_account:source.value,destination_account:destination.value,amount:Number(amount.value),currency:'USD'})})); } catch(e) { out('transferOut',e); } }
+    async function recommendations() {
+      try {
+        const data = await call('/api/v1/recommendations/'+encodeURIComponent(recommendationAccount.value));
+        out('recommendationOut', {
+          ultima_recomendacion: data[0] || null,
+          recomendaciones_disponibles: data.length
+        });
+      } catch(e) { out('recommendationOut',e); }
+    }
+    async function bancs() {
+      try {
+        out('bancsOut', await call('/api/v1/bancs/events',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            legacy_id:'UI-'+Date.now(),
+            source_account:bancsSource.value,
+            destination_account:bancsDestination.value,
+            amount:bancsAmount.value,
+            currency:'usd',
+            event_time:new Date().toISOString()
+          })
+        }));
+      } catch(e) { out('bancsOut',e); }
+    }
+    async function synthetic() { try { out('syntheticOut', await call('/synthetic/transfer')); } catch(e) { out('syntheticOut',e); } }
+    window.addEventListener('DOMContentLoaded', () => { loadAccounts(); loadMetrics(); });
+  </script>
+</body>
+</html>

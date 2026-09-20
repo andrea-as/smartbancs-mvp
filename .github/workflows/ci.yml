@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+      - name: ETL validation
+        run: |
+          pip install pandas==2.2.3
+          python etl/transform_transactions.py
+      - name: Build API
+        run: docker build -t smartbancs-api ./services/api
+      - name: Build AI
+        run: docker build -t smartbancs-ai ./services/ai
+      - name: Python syntax
+        run: python -m compileall services etl tests
+      - name: Validate Terraform formatting
+        run: terraform fmt -check -recursive terraform

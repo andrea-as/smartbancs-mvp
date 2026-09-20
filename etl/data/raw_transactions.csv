@@ -1,0 +1,6 @@
+transaction_id,account_id,amount,currency,event_time,status
+tx-001, acc-1001 ,100.50,usd,2026-09-15 10:00:00,completed
+tx-002,acc-1002,,USD,2026-09-15 10:01:00,completed
+tx-003,ACC-1003,250.00,usd,2026-09-15T10:02:00Z,completed
+tx-003,ACC-1003,250.00,usd,2026-09-15T10:02:00Z,completed
+tx-004,ACC-1004,abc,USD,invalid_date,completed

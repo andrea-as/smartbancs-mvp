@@ -1,0 +1,29 @@
+{
+  "environment": "local Docker Desktop",
+  "note": "Evidence of the test procedure, not a production capacity certification",
+  "controlled_100_requests": {
+    "concurrency": 20,
+    "successful": 100,
+    "total": 100,
+    "p95_s": 1.1713,
+    "under_2s": 100,
+    "errors": 0
+  },
+  "controlled_10000_requests": {
+    "concurrency": 20,
+    "successful": 10000,
+    "total": 10000,
+    "observed_rps": 96.82,
+    "p95_s": 0.9709,
+    "under_2s": 9929,
+    "transport_errors": 0
+  },
+  "aggressive_10000_requests": {
+    "concurrency": 1000,
+    "successful": 83,
+    "total": 10000,
+    "observed_rps": 81.1,
+    "p95_s": 27.2492,
+    "transport_errors": 9745
+  }
+}

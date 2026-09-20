@@ -1,0 +1,2 @@
+transaction_id,account_id,amount,currency,event_time,event_date,status,quality_amount_ok,quality_date_ok,quality_id_ok
+tx-001,acc-1001,100.5,USD,2026-09-15 10:00:00+00:00,2026-09-15,COMPLETED,True,True,True

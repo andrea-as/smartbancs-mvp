@@ -1,0 +1,34 @@
+groups:
+  - name: smartbancs-slos
+    rules:
+      - alert: SmartBancsTransferLatencyHigh
+        expr: histogram_quantile(0.95, sum(rate(smartbancs_http_request_duration_seconds_bucket{path="/api/v1/transfers"}[5m])) by (le)) > 2
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "El p95 de transferencias supera 2 segundos"
+
+      - alert: SmartBancsDatabaseErrors
+        expr: increase(smartbancs_db_errors_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Se detectaron errores de base de datos"
+
+      - alert: SmartBancsAIQueueBacklog
+        expr: smartbancs_ai_queue_depth > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "La cola de IA tiene backlog"
+
+      - alert: SmartBancsBancsRejections
+        expr: increase(smartbancs_bancs_events_total{status="rejected"}[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Se rechazaron eventos de Bancs"
