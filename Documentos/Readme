@@ -1,0 +1,10 @@
+## 🧩 Documentación del proyecto
+
+En esta carpeta se presenta toda la **documentación técnica** del MVP, incluyendo:
+- Arquitectura general del sistema  
+- Decisiones técnicas y justificación  
+- Integración con Bancs  
+- Manejo del modelo de IA  
+- Respuesta al incidente simulado  
+
+También se incluyen las **instrucciones de ejecución** y las **evidencias** del proyecto (videos, datos de prueba y material de presentación) dentro de las carpetas correspondientes.
